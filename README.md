@@ -22,3 +22,4 @@ If you have Vagrant installed, the easiest way to run this program would be:
 * `vagrant up` - provision an Ubuntu 20.04 VM
 * `vagrant ssh` - SSH into the newly-created VM
 * `cd /vagrant` - go to the Vagrant working directory
+* `python3 monitor.py --handle <handle>`
