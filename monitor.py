@@ -14,13 +14,16 @@ def parse_args():
 
 # Test inactive: BillNye
 # Test active: Telkomsel
+# TODO: pep8
+# TODO: simple REST API
+# TODO: Dockerise
 class TweetMonitor:
     def __init__(self, handle):
         self.handle = handle
         self.tweet_ids = []
         self.tweets = []
 
-    # TODO: first time, just get 5
+    # TODO: what's the limit on how many we can query here? what if the account posts too much?
     def get_tweets_for_handle(self, limit=None):
         # use legacy (no-JS) URL
         # TODO: can we reverse engineer the Twitter async protocol?
@@ -41,33 +44,24 @@ class TweetMonitor:
 
         # Tweets that we've already saved will have their ID saved in
         # self.tweet_ids - throw away any that we've already seen
-
-        # TODO: what's the best way to save all IDs, but only some texts?
-        # We're duplicating effort here
-        new_tweet_ids = [
-            tweet.get("data-id")
-            for tweet in tweet_containers
+        new_tweets = [
+            {
+                "id": tweet.get("data-id"),
+                "text": tweet.get_text().strip()
+            } for tweet in tweet_containers
             if tweet.get("data-id") not in self.tweet_ids
         ]
-        new_tweet_content = [
-            tweet.get_text().strip()
-            for tweet in tweet_containers
-            if tweet.get("data-id") not in self.tweet_ids
-        ][:limit]
 
-        # new_tweets = {
-        #     tweet.get("data-id"): tweet.get_text().strip()
-        #     for tweet in tweet_containers
-        #     if tweet.get("data-id") not in self.tweet_ids
-        # }
+        # save all Tweet IDs
+        self.tweet_ids += [tweet["id"] for tweet in new_tweets]
 
-        # always save every ID
-        self.tweet_ids += new_tweet_ids
+        # save all Tweet content, sliced if `limit` is set. Save new ones to
+        # the start of the list, to maintain the list in descending order of
+        # creation
+        new_tweet_content = [tweet["text"] for tweet in new_tweets][:limit]
+        self.tweets = new_tweet_content + self.tweets
 
-        # if `limit` arg is set, then only store that many Tweets
-        self.tweets += new_tweet_content
-
-        # return new values
+        # return new Tweets
         return new_tweet_content
 
 if __name__ == "__main__":
@@ -78,18 +72,15 @@ if __name__ == "__main__":
     limit = args.initial
     spacer = "-"*30
     while (True):
-        print ("Fetching latest Tweets for user {}".format(args.handle))
+        print ("Fetching latest Tweets for user {}...".format(args.handle))
         tweets = monitor.get_tweets_for_handle(limit=limit)
         limit = None
 
         if not tweets:
             print ("None found!")
         else:
-            # for id, tweet in tweets.items():
-            #     print ("{}: {}\n\n".format(id, tweet))
-
             for tweet in tweets:
                 print ("{}\n\n{}\n".format(spacer, tweet))
 
-        print ("{}\n\nSleeping for {} minutes\n\n\n\n".format(spacer, args.interval))
+        print ("{}\n\nSleeping for {} minutes...\n\n\n\n".format(spacer, args.interval))
         time.sleep(args.interval * 60)
