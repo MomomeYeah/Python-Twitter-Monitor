@@ -9,4 +9,4 @@ COPY . .
 RUN pip install -r requirements.txt
 
 # Start the app
-CMD ["python3", "monitor.py", "--handle", "BillNye", "--interval", "1"]
+CMD ["python3", "monitor.py", "--handle", "BillNye", "--interval", "10"]
