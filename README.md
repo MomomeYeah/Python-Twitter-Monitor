@@ -13,6 +13,11 @@ The following restrictions apply to this implementation:
 * make sure to use scraping, or APIs that do not require user authentication or a twitter developer account
 * using open source libraries like Twint or Tweepy to do the heavy lifting is not allowed
 
+## Assumptions
+
+* Tweets should be displayed in order of most to least recent, and this order
+  should be maintained when polling for new Tweets
+
 ## Running the Program Directly
 
 Assuming you have Python 3 installed, along with Pip 3:
