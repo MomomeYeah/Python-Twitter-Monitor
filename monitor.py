@@ -1,7 +1,9 @@
 import argparse
 import requests
+import threading
 import time
 from bs4 import BeautifulSoup
+from api import APIServer
 
 
 def parse_args():
@@ -13,9 +15,8 @@ def parse_args():
     return parser.parse_args()
 
 # Test inactive: BillNye
-# Test active: Telkomsel
+# Test active: Telkomsel / kirin_brewery
 # TODO: pep8
-# TODO: simple REST API
 # TODO: Dockerise
 class TweetMonitor:
     def __init__(self, handle):
@@ -25,7 +26,7 @@ class TweetMonitor:
 
     # TODO: what's the limit on how many we can query here? what if the account posts too much?
     def get_tweets_for_handle(self, limit=None):
-        # use legacy (no-JS) URL
+        # use legacy (no-JS) URL - this is only valid until December 15th, 2020
         # TODO: can we reverse engineer the Twitter async protocol?
         # Perhaps check out twitter_scraper for ideas
         # TODO: another option would be using e.g. Selenium
@@ -57,30 +58,51 @@ class TweetMonitor:
 
         # save all Tweet content, sliced if `limit` is set. Save new ones to
         # the start of the list, to maintain the list in descending order of
-        # creation
+        # creation. To ensure we keep the same object ID for self.tweets, we
+        # make sure not to assign a new variable here. This is so that the
+        # reference to this object used by the API remains valid
         new_tweet_content = [tweet["text"] for tweet in new_tweets][:limit]
-        self.tweets = new_tweet_content + self.tweets
+        self.tweets[:0] = new_tweet_content
 
         # return new Tweets
         return new_tweet_content
 
 if __name__ == "__main__":
     args = parse_args()
-    print ("Args: {}".format(args))
+    print ("*"*80 + "\n")
+    print ("Welcome to Twitter monitor!\n")
+    print ("\n    Args:")
+    print ("\n      Handle: {}".format(args.handle))
+    print ("\n      Interval: {}".format(args.interval))
+    print ("\n      Initial Count: {}".format(args.initial))
+    print ("\n" + "*"*80)
 
-    monitor = TweetMonitor(handle=args.handle)
-    limit = args.initial
-    spacer = "-"*30
-    while (True):
-        print ("Fetching latest Tweets for user {}...".format(args.handle))
-        tweets = monitor.get_tweets_for_handle(limit=limit)
-        limit = None
+    try:
+        # new monitor instance
+        monitor = TweetMonitor(handle=args.handle)
 
-        if not tweets:
-            print ("None found!")
-        else:
-            for tweet in tweets:
-                print ("{}\n\n{}\n".format(spacer, tweet))
+        # new instance of API server
+        server = APIServer(resource=monitor.tweets, endpoint_name="tweets")
+        server_thread = threading.Thread(target=server.run)
+        server_thread.start()
 
-        print ("{}\n\nSleeping for {} minutes...\n\n\n\n".format(spacer, args.interval))
-        time.sleep(args.interval * 60)
+        # main loop
+        limit = args.initial
+        spacer = "-"*30
+        while (True):
+            print ("Fetching latest Tweets for user {}...".format(args.handle))
+            tweets = monitor.get_tweets_for_handle(limit=limit)
+            limit = None
+
+            if not tweets:
+                print ("None found!")
+            else:
+                for tweet in tweets:
+                    print ("{}\n\n{}\n".format(spacer, tweet))
+
+            print ("{}\n\nSleeping for {} minutes...\n\n\n\n".format(spacer, args.interval))
+            time.sleep(args.interval * 60)
+    except KeyboardInterrupt as e:
+        # stop API server
+        requests.get("http://localhost:8000/api/shutdown")
+        server_thread.join()
