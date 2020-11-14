@@ -41,6 +41,9 @@ If you have Docker installed, the easiest way to run this program would be:
 * `docker build -t python-twitter-monitor .`
 * `docker run -itp 8000:8000 python-twitter-monitor`
 
+In order to change the listening interval, and set the Twitter handle, edit the
+`Dockerfile` and modify the final `CMD` accordingly.
+
 ## Known Limitations
 
 * Currently, Tweets are fetched using the legacy version of twitter.com, because
