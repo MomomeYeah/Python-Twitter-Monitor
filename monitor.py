@@ -16,20 +16,14 @@ def parse_args():
 
 # Test inactive: BillNye
 # Test active: Telkomsel / kirin_brewery
-# TODO: pep8
-# TODO: Dockerise
 class TweetMonitor:
     def __init__(self, handle):
         self.handle = handle
         self.tweet_ids = []
         self.tweets = []
 
-    # TODO: what's the limit on how many we can query here? what if the account posts too much?
     def get_tweets_for_handle(self, limit=None):
         # use legacy (no-JS) URL - this is only valid until December 15th, 2020
-        # TODO: can we reverse engineer the Twitter async protocol?
-        # Perhaps check out twitter_scraper for ideas
-        # TODO: another option would be using e.g. Selenium
         url = "https://mobile.twitter.com/{}".format(self.handle)
 
         response = requests.get(url)
@@ -104,5 +98,6 @@ if __name__ == "__main__":
             time.sleep(args.interval * 60)
     except KeyboardInterrupt as e:
         # stop API server
-        requests.get("http://localhost:8000/api/shutdown")
+        shutdown_url = "http://localhost:{}{}".format(server.port, server.shutdown_url)
+        requests.get(shutdown_url)
         server_thread.join()

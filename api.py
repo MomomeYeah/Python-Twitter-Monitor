@@ -4,7 +4,15 @@ from flask import Flask, jsonify, request
 
 class APIServer:
     def __init__(self, resource, endpoint_name):
+        self.host = "0.0.0.0"
+        self.port = 8000
+        self.get_resource_url = "/api/{}".format(endpoint_name)
+        self.shutdown_url = "/api/shutdown"
+
+        # resource is an object that will be JSON-ified and returned whenever
+        # a client makes a request via `get_resource`
         self.resource = resource
+        # endpoint name is the URL suffix that this server will listen on
         self.endpoint_name = endpoint_name
 
         # initialize Flask app
@@ -15,17 +23,17 @@ class APIServer:
         # Flask startup message from printing to the console
         os.environ["WERKZEUG_RUN_MAIN"] = "true"
 
-        # end endpoint to get items
-        self.app.add_url_rule(rule="/api/{}".format(endpoint_name), endpoint="get_resource", view_func=self.get_tasks)
+        # end endpoint to get resource
+        self.app.add_url_rule(rule=self.get_resource_url, endpoint="get_resource", view_func=self.get_resource)
         # end endpoint to shutdown server
-        self.app.add_url_rule(rule="/api/shutdown", endpoint="shutdown", view_func=self.shutdown)
+        self.app.add_url_rule(rule=self.shutdown_url, endpoint="shutdown", view_func=self.shutdown)
 
         # Minimise console logging output
         log = logging.getLogger("werkzeug")
         log.setLevel(logging.ERROR)
         self.app.logger.disabled = True
 
-    def get_tasks(self):
+    def get_resource(self):
         return jsonify(self.resource)
 
     def shutdown(self):
@@ -34,7 +42,7 @@ class APIServer:
         return "Done"
 
     def run(self):
-        self.app.run(debug=False, host="0.0.0.0", port=8000)
+        self.app.run(debug=False, host=self.host, port=self.port)
 
 if __name__ == "__main__":
     tasks = [
