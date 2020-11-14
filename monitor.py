@@ -9,13 +9,17 @@ from api import APIServer
 def parse_args():
     parser = argparse.ArgumentParser(description="Twitter Account Monitor")
     parser.add_argument("--handle", required=True, help="The Twitter handle to monitor")
-    parser.add_argument("--interval", required=False, default=10, type=int, help="The length of time in minutes between monitoring intervals")
-    parser.add_argument("--initial", required=False, default=5, type=int, help="The number of Tweets to initially fetch")
+    parser.add_argument("--interval", required=False, default=10, type=int,
+                        help="The length of time in minutes between monitoring intervals")
+    parser.add_argument("--initial", required=False, default=5, type=int,
+                        help="The number of Tweets to initially fetch")
 
     return parser.parse_args()
 
 # Test inactive: BillNye
 # Test active: Telkomsel / kirin_brewery
+
+
 class TweetMonitor:
     def __init__(self, handle):
         self.handle = handle
@@ -33,7 +37,7 @@ class TweetMonitor:
 
         # Each Tweet lives in a div with class `tweet-text`
         soup = BeautifulSoup(response.text, "html.parser")
-        tweet_containers = soup.find_all("div", attrs = {
+        tweet_containers = soup.find_all("div", attrs={
             "class": "tweet-text"
         })
 
@@ -60,6 +64,7 @@ class TweetMonitor:
 
         # return new Tweets
         return new_tweet_content
+
 
 if __name__ == "__main__":
     args = parse_args()

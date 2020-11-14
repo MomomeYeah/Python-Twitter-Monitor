@@ -44,9 +44,11 @@ If you have Vagrant installed, the easiest way to run this program would be:
   use has Tweeted more than 30 times in the last 10 minutes, not all Tweets will
   be fetched. The page does have a `Load older Tweets` button, so it shouldn't be
   too hard to keep searching until we're all caught up
+* The API server is shutdown cleanly by the main program, by accessing the
+  `/shutdown` endpoint. This can be accessed by any user of the program though,
+  which will obviously cause the API server to stop functioning
 
 ## TODO Items
 
-* pep8 compliance
 * Dockerise
 * improve stdout formatting

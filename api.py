@@ -2,6 +2,7 @@ import logging
 import os
 from flask import Flask, jsonify, request
 
+
 class APIServer:
     def __init__(self, resource, endpoint_name):
         self.host = "0.0.0.0"
@@ -24,7 +25,8 @@ class APIServer:
         os.environ["WERKZEUG_RUN_MAIN"] = "true"
 
         # end endpoint to get resource
-        self.app.add_url_rule(rule=self.get_resource_url, endpoint="get_resource", view_func=self.get_resource)
+        self.app.add_url_rule(rule=self.get_resource_url,
+                              endpoint="get_resource", view_func=self.get_resource)
         # end endpoint to shutdown server
         self.app.add_url_rule(rule=self.shutdown_url, endpoint="shutdown", view_func=self.shutdown)
 
@@ -43,6 +45,7 @@ class APIServer:
 
     def run(self):
         self.app.run(debug=False, host=self.host, port=self.port)
+
 
 if __name__ == "__main__":
     tasks = [
