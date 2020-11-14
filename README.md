@@ -34,6 +34,9 @@ If you have Vagrant installed, the easiest way to run this program would be:
 * `cd /vagrant` - go to the Vagrant working directory
 * `python3 monitor.py --handle <handle>` - use `--help` for additional options
 
+Note that Vagrant / VirtualBox doesn't seem to play nicely if Docker is installed,
+the issue seems to be with Hyper-V. https://github.com/hashicorp/vagrant/issues/10070
+
 ## Running the Program with Docker
 
 If you have Docker installed, the easiest way to run this program would be:
@@ -56,7 +59,7 @@ In order to change the listening interval, and set the Twitter handle, edit the
   If that doesn't work, it might be possible to do this via Selenium, or possibly
   Scrapy with a JavaScript-loading addition
 * By the default the legacy Twitter site loads 30 Tweets at a time. If the specified
-  use has Tweeted more than 30 times in the last 10 minutes, not all Tweets will
+  user has Tweeted more than 30 times in the last 10 minutes, not all Tweets will
   be fetched. The page does have a `Load older Tweets` button, so it shouldn't be
   too hard to keep searching until we're all caught up
 * The API server is shutdown cleanly by the main program, by accessing the
