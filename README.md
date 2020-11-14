@@ -34,6 +34,13 @@ If you have Vagrant installed, the easiest way to run this program would be:
 * `cd /vagrant` - go to the Vagrant working directory
 * `python3 monitor.py --handle <handle>` - use `--help` for additional options
 
+## Running the Program with Docker
+
+If you have Docker installed, the easiest way to run this program would be:
+
+* `docker build -t python-twitter-monitor .`
+* `docker run -itp 8000:8000 python-twitter-monitor`
+
 ## Known Limitations
 
 * Currently, Tweets are fetched using the legacy version of twitter.com, because
@@ -55,5 +62,4 @@ If you have Vagrant installed, the easiest way to run this program would be:
 
 ## TODO Items
 
-* Dockerise
 * improve stdout formatting
