@@ -35,20 +35,29 @@ class TweetMonitor:
             print ("Failed to get Tweets for user {}".format(self.handle))
             exit(1)
 
-        # Each Tweet lives in a div with class `tweet-text`
+        # Each Tweet lives in a <table> with class `tweet`
         soup = BeautifulSoup(response.text, "html.parser")
-        tweet_containers = soup.find_all("div", attrs={
-            "class": "tweet-text"
+        tweet_containers = soup.find_all("table", attrs={
+            "class": "tweet"
         })
 
-        # Tweets that we've already saved will have their ID saved in
-        # self.tweet_ids - throw away any that we've already seen
-        new_tweets = [
+        # from each Tweet, get the ID, timestamp, and content
+        tweet_info = [
             {
-                "id": tweet.get("data-id"),
-                "text": tweet.get_text().strip()
+                "id": tweet.find("div", attrs={
+                    "class": "tweet-text"
+                }).get("data-id"),
+                "timestamp": tweet.find("td", attrs={
+                    "class": "timestamp"
+                }).find("a").get_text().strip(),
+                "text": tweet.find("div", attrs={
+                    "class": "tweet-text"
+                }).get_text().strip()
             } for tweet in tweet_containers
-            if tweet.get("data-id") not in self.tweet_ids
+        ]
+        new_tweets = [
+            tweet for tweet in tweet_info
+            if tweet["id"] not in self.tweet_ids
         ]
 
         # save all Tweet IDs
@@ -59,7 +68,7 @@ class TweetMonitor:
         # creation. To ensure we keep the same object ID for self.tweets, we
         # make sure not to assign a new variable here. This is so that the
         # reference to this object used by the API remains valid
-        new_tweet_content = [tweet["text"] for tweet in new_tweets][:limit]
+        new_tweet_content = [tweet for tweet in new_tweets][:limit]
         self.tweets[:0] = new_tweet_content
 
         # return new Tweets
@@ -81,7 +90,8 @@ if __name__ == "__main__":
         monitor = TweetMonitor(handle=args.handle)
 
         # new instance of API server
-        server = APIServer(resource=monitor.tweets, endpoint_name="tweets")
+        server = APIServer(endpoint_name="tweets", monitor_resource=monitor.tweets,
+                           monitor_resource_fields=["id", "text"])
         server_thread = threading.Thread(target=server.run)
         server_thread.start()
 
@@ -89,17 +99,32 @@ if __name__ == "__main__":
         limit = args.initial
         spacer = "-"*30
         while (True):
-            print ("Fetching latest Tweets for user {}...".format(args.handle))
+            print ("\nFetching latest Tweets for user {}...\n".format(args.handle))
             tweets = monitor.get_tweets_for_handle(limit=limit)
             limit = None
 
             if not tweets:
-                print ("None found!")
+                print ("User {} has no new Tweets".format(args.handle))
             else:
                 for tweet in tweets:
-                    print ("{}\n\n{}\n".format(spacer, tweet))
+                    # display Tweet metadata
+                    print ("{}\n".format(spacer))
+                    print ("Posted {} with Tweet ID {}\n".format(tweet["timestamp"], tweet["id"]))
 
-            print ("{}\n\nSleeping for {} minutes...\n\n\n\n".format(spacer, args.interval))
+                    # split the Tweet text every N chars for nicer display
+                    N = 60
+                    tweet_text = tweet["text"].replace("\n", " ")
+                    tweet_text_pieces = [tweet_text[i:i+N] for i in range(0, len(tweet_text), N)]
+                    for tweet_piece in tweet_text_pieces:
+                        print ("    {}".format(tweet_piece.strip()))
+
+                    # final new line
+                    print ("")
+
+            # notify that user how long we're sleeping for
+            suffix = "s" if args.interval > 1 else ""
+            print ("{}\n\nChecking again in {} minute{}...\n\n\n\n".format(
+                spacer, args.interval, suffix))
             time.sleep(args.interval * 60)
     except KeyboardInterrupt as e:
         # stop API server

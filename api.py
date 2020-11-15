@@ -4,17 +4,19 @@ from flask import Flask, jsonify, request
 
 
 class APIServer:
-    def __init__(self, resource, endpoint_name):
+    def __init__(self, endpoint_name, monitor_resource, monitor_resource_fields):
         self.host = "0.0.0.0"
         self.port = 8000
         self.get_resource_url = "/api/{}".format(endpoint_name)
         self.shutdown_url = "/api/shutdown"
 
-        # resource is an object that will be JSON-ified and returned whenever
-        # a client makes a request via `get_resource`
-        self.resource = resource
         # endpoint name is the URL suffix that this server will listen on
         self.endpoint_name = endpoint_name
+
+        # resource is an object that will be JSON-ified and returned whenever
+        # a client makes a request via `get_resource`
+        self.resource = monitor_resource
+        self.resource_fields = monitor_resource_fields
 
         # initialize Flask app
         self.app = Flask(__name__)
@@ -35,8 +37,19 @@ class APIServer:
         log.setLevel(logging.ERROR)
         self.app.logger.disabled = True
 
+    def _get_resource_item_fields(self, item):
+        return {
+            k: v for k, v in item.items()
+            if k in self.resource_fields
+        }
+
     def get_resource(self):
-        return jsonify(self.resource)
+        ret_resource = [
+            self._get_resource_item_fields(resource_item)
+            for resource_item in self.resource
+        ]
+
+        return jsonify(ret_resource)
 
     def shutdown(self):
         print ("Shutting down API server")
