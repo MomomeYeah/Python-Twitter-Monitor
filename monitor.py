@@ -78,10 +78,9 @@ class TweetMonitor:
 
             # get latest Tweets
             response = requests.get(url)
-            # opn failed response, just exit
+            # on failed response, raise an Exception
             if not response:
-                print ("Failed to get Tweets for user {}".format(self.handle))
-                exit(1)
+                raise Exception("Failed to get Tweets")
 
             # Pull individual Tweets out of HTML response - each Tweet lives
             # in a <table> with class `tweet`
@@ -101,6 +100,13 @@ class TweetMonitor:
 
         # we now have all the latest Tweets - return the full list
         return tweets
+
+
+def _on_exit(server, server_thread):
+    """Shutdown API server and end associated thread"""
+    shutdown_url = "http://localhost:{}{}".format(server.port, server.shutdown_url)
+    requests.get(shutdown_url)
+    server_thread.join()
 
 
 if __name__ == "__main__":
@@ -158,7 +164,7 @@ if __name__ == "__main__":
                 spacer, args.interval, suffix))
             time.sleep(args.interval * 60)
     except KeyboardInterrupt as e:
-        # stop API server
-        shutdown_url = "http://localhost:{}{}".format(server.port, server.shutdown_url)
-        requests.get(shutdown_url)
-        server_thread.join()
+        _on_exit(server=server, server_thread=server_thread)
+    except Exception as e:
+        print ("Failed to get Tweets for user {}".format(args.handle))
+        _on_exit(server=server, server_thread=server_thread)
