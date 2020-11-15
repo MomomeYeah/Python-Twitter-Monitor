@@ -26,21 +26,8 @@ class TweetMonitor:
         self.tweet_ids = []
         self.tweets = []
 
-    def get_tweets_for_handle(self, limit=None):
-        # use legacy (no-JS) URL - this is only valid until December 15th, 2020
-        url = "https://mobile.twitter.com/{}".format(self.handle)
-
-        response = requests.get(url)
-        if not response:
-            print ("Failed to get Tweets for user {}".format(self.handle))
-            exit(1)
-
-        # Each Tweet lives in a <table> with class `tweet`
-        soup = BeautifulSoup(response.text, "html.parser")
-        tweet_containers = soup.find_all("table", attrs={
-            "class": "tweet"
-        })
-
+    def _save_tweets(self, tweet_containers):
+        """Parse an HTML response from Twitter.com, and save unseen Tweets"""
         # from each Tweet, get the ID, timestamp, and content
         tweet_info = [
             {
@@ -73,6 +60,47 @@ class TweetMonitor:
 
         # return new Tweets
         return new_tweet_content
+
+    def get_tweets_for_handle(self, limit=None):
+        """Fetch all recent Tweets for the given handle, returned in the order they were posted"""
+
+        tweets = []
+        # fetching from mobile.twitter.com returns at most 20 results at a time,
+        # so keep making requests until no new results are found
+        while True:
+            max_tweet_id = None
+            # use legacy (no-JS) URL - this is only valid until December 15th, 2020
+            url = "https://mobile.twitter.com/{}".format(self.handle)
+            # if this isn't the first time through the loop, then look up all
+            # Tweets older than the oldest Tweets we got from the latest iteration
+            if tweets:
+                url = "{}?max_id={}".format(url, tweets[-1]["id"])
+
+            # get latest Tweets
+            response = requests.get(url)
+            # opn failed response, just exit
+            if not response:
+                print ("Failed to get Tweets for user {}".format(self.handle))
+                exit(1)
+
+            # Pull individual Tweets out of HTML response - each Tweet lives
+            # in a <table> with class `tweet`
+            soup = BeautifulSoup(response.text, "html.parser")
+            tweet_containers = soup.find_all("table", attrs={
+                "class": "tweet"
+            })
+
+            # save Tweets
+            new_tweets = self._save_tweets(tweet_containers)
+            tweets += new_tweets
+
+            # if no new tweets were found, then we're up to date and can exit.
+            # if `limit` is set, then exit when we've found that many tweets
+            if not new_tweets or (limit is not None and len(new_tweets) >= limit):
+                break
+
+        # we now have all the latest Tweets - return the full list
+        return tweets
 
 
 if __name__ == "__main__":

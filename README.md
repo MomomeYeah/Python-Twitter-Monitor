@@ -2,6 +2,15 @@
 
 This is a program which will monitor posts from a given Twitter account.
 
+The main loop is, loosely:
+
+1. query the Twitter web page for the given handle, grabbing the 5 most recent
+   Tweets (or as many as possible, if the handle has Tweeted fewer than 5 times)
+1. sleep for 10 minutes
+1. query the Twitter web page again, possible multiple times if the handle has
+   Tweeted more than 20 times in the past 10 minutes
+1. GOTO 2.
+
 ## Restrictions
 
 The following restrictions apply to this implementation:
@@ -60,10 +69,6 @@ In order to change the listening interval, and set the Twitter handle, edit the
   `twitter_scraper`, but no tools that I've tried so far actually work. If that
   doesn't work, it might be possible to do this via Selenium, or possibly Scrapy
   with a JavaScript-loading addition
-* By the default the legacy Twitter site loads 30 Tweets at a time. If the specified
-  user has Tweeted more than 30 times in the last 10 minutes, not all Tweets will
-  be fetched. The page does have a `Load older Tweets` button, so it shouldn't be
-  too hard to keep searching until we're all caught up
 * The API server is shutdown cleanly by the main program, by accessing the
   `/shutdown` endpoint. This can be accessed by any user of the program though,
   which will obviously cause the API server to stop functioning
