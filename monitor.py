@@ -109,7 +109,10 @@ if __name__ == "__main__":
                 for tweet in tweets:
                     # display Tweet metadata
                     print ("{}\n".format(spacer))
-                    print ("Posted {} with Tweet ID {}\n".format(tweet["timestamp"], tweet["id"]))
+                    timestamp = tweet["timestamp"]
+                    if timestamp.endswith("s") or timestamp.endswith("m") or timestamp.endswith("h"):
+                        timestamp += " ago"
+                    print ("Posted {} with Tweet ID {}\n".format(timestamp, tweet["id"]))
 
                     # split the Tweet text every N chars for nicer display
                     N = 60
